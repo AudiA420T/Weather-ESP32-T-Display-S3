@@ -14,8 +14,16 @@ TFT_eSPI tft = TFT_eSPI();  // Invoke library, pins defined in User_Setup.h
 const char* ssid = "YourNetworkName";
 const char* password = "YourPassword";
 
+//URL Endpoint for the API
+String baseURL = "https://api.tomorrow.io/v4/weather/forecast?location=";
+String apiKey = "APIKEY";
+
+// Replace with your location Credentials
+String lat = "LAT";
+String lon = "LONG";
+
 // API Endpoint
-String URL = "https://api.tomorrow.io/v4/weather/forecast?location=LAT,LONG&apikey=APIKEY";
+String URL = baseURL + lat + "," + lon + "&apikey=" + apiKey;
 
 void setup() {
   Serial.begin(115200);
@@ -61,8 +69,9 @@ void loop() {
     yield(); // Reset watchdog
 
     float humi = dht.readHumidity();
-    //true is used for F over C
+    //true is used for F over C, this returns F
     float temp = dht.readTemperature(true);
+	//this is temp in C
     float tempC = dht.readTemperature();
 
     if (httpCode > 0) {
