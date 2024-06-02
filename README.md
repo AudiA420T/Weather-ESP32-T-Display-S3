@@ -17,4 +17,13 @@ Updated Package
 ![IMG_9610](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/7dccee26-8287-4442-85d7-8dc222628b5e)
 
 *** NOTES FOR THE LILYGO T-DISPLAY ***
-TBD
+
+1. Use this link to set up - https://github.com/Xinyuan-LilyGO/T-Display-S3.
+2. Ensure you modify the User_Setup_Select.h file, especially if you do any library upgrades
+3. I had a compilation issue come up all of the sudden after everything had been working. I had upgraded the ESP32 board version to 3.0.X. I had to roll back to a previous version (see image below)
+4. Originally, my serial monitor was not showing any output. On this board I had to update the setting "USB CDC On Boot" to "Enabled"
+
+![image](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/27a6679d-466a-4d6b-9637-79b4d5b87490)
+![image](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/d4a7983e-784c-442e-b74a-7958968fc93d)
+
+
