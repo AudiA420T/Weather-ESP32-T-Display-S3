@@ -25,54 +25,35 @@ String lon = "LONG";
 // API Endpoint
 String URL = baseURL + lat + "," + lon + "&apikey=" + apiKey;
 
-void setup() {
-  Serial.begin(115200);
-  
-  // Initialize LCD
-  tft.init();
-  tft.setRotation(3);
+BlynkTimer uptimeTimer;
+BlynkTimer weatherApiTimer;
+BlynkTimer dhtSensorTimer;
 
-  /* Start the DHT11 Sensor */
-  dht.begin();
-
-  // Fill the screen with a couple of colors on bootup
-  tft.fillScreen(TFT_RED);
-  delay(500);
-  tft.fillScreen(TFT_GREEN);
-  delay(500);
-  tft.fillScreen(TFT_BLUE);
-  delay(500);
-  tft.fillScreen(TFT_BLACK);
-
-  // Connect to WiFi
-  WiFi.begin(ssid, password);
-
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-    yield(); // Reset watchdog
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connected.");
-  Serial.println("IP address: ");
-  Serial.println(WiFi.localIP());
+// This function is called every time the device is connected to the Blynk.Cloud
+BLYNK_CONNECTED() {
+  // Change Web Link Button message to "Congratulations!"
+  // Blynk.setProperty(V3, "offImageUrl", "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations.png");
+  // Blynk.setProperty(V3, "onImageUrl",  "https://static-image.nyc3.cdn.digitaloceanspaces.com/general/fte/congratulations_pressed.png");
+  // Blynk.setProperty(V3, "url", "https://docs.blynk.io/en/getting-started/what-do-i-need-to-blynk/how-quickstart-device-was-made");
 }
 
-void loop() {
-  // Wait for WiFi connection
+// This function sends Arduino's uptime every second to Virtual Pin 2.
+void uptimeEvent() {
+  // You can send any value at any time.
+  // Please don't send more than 10 values per second.
+  Blynk.virtualWrite(V2, millis() / 1000);
+  yield(); // Reset watchdog
+}
+
+// This function grabs weather data from the API
+void fetchWeatherData() {
+   // Wait for WiFi connection
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
     http.begin(URL);
 
     int httpCode = http.GET();
     yield(); // Reset watchdog
-
-    float humi = dht.readHumidity();
-    //true is used for F over C, this returns F
-    float temp = dht.readTemperature(true);
-	//this is temp in C
-    float tempC = dht.readTemperature();
 
     if (httpCode > 0) {
       String JSON_Data = http.getString();
@@ -93,6 +74,14 @@ void loop() {
 
       int uvIndex = obj["uvIndex"];
 
+      // Read internal sensor data
+      float humi = dht.readHumidity();
+      float temp = dht.readTemperature(true);
+
+      // Send data to Blynk
+      Blynk.virtualWrite(V3, temp);  // V3 is for internal temperature
+      Blynk.virtualWrite(V4, humi);  // V4 is for humidity
+
       // Display the data on the TFT screen
       tft.fillScreen(TFT_BLACK); // Set background to black
       tft.setCursor(0, 0, 2);
@@ -110,10 +99,60 @@ void loop() {
 
     http.end();
   }
+}
 
-  // Wait for 10 min
-  for (int i = 0; i < 600; i++) {
-    delay(1000); // Delay in smaller increments to call yield() frequently
-    yield(); // Reset watchdog
-  }
+// This function grabs the DHT data and updates the specific LCD lines
+void updateDhtData() {
+  // Read internal sensor data
+  float humi = dht.readHumidity();
+  float temp = dht.readTemperature(true);
+  
+  // Send data to Blynk
+  Blynk.virtualWrite(V3, temp);  // V3 is for internal temperature
+  Blynk.virtualWrite(V4, humi);  // V4 is for humidity
+
+  // Update internal temperature
+  tft.setCursor(0, 34, 2.5);
+  tft.setTextSize(2.5);
+  tft.println("Int Temp: " + String(int(round(temp))) + "F");
+  // Update internal humidity
+  tft.setCursor(0, 68, 2.5);
+  tft.setTextSize(2.5);
+  tft.println("Int Hum: " + String(int(humi)) + "%");
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, password);
+
+  // Setup a function to be called every second
+  uptimeTimer.setInterval(1000L, uptimeEvent);
+  weatherApiTimer.setInterval(600000L, fetchWeatherData); // Every 10 minutes
+  dhtSensorTimer.setInterval(10000L, updateDhtData); // Every 10 seconds
+  
+  // Initialize LCD
+  tft.init();
+  tft.setRotation(3);
+
+  // Start the DHT11 Sensor
+  dht.begin();
+
+  // Fill the screen with a couple of colors on bootup
+  tft.fillScreen(TFT_RED);
+  delay(500);
+  tft.fillScreen(TFT_GREEN);
+  delay(500);
+  tft.fillScreen(TFT_BLUE);
+  delay(500);
+  tft.fillScreen(TFT_BLACK);
+
+  fetchWeatherData();
+}
+
+void loop() {
+  Blynk.run();
+  uptimeTimer.run();
+  weatherApiTimer.run();
+  dhtSensorTimer.run();
 }
