@@ -20,6 +20,7 @@
 #include <ArduinoJson.h>
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <SPI.h>
+#include <time.h>
 // Temp sensor stuff
 #include <DHT.h>
 #define DHT11PIN 13
@@ -62,48 +63,105 @@ void uptimeEvent() {
   yield(); // Reset watchdog
 }
 
-// This function shows the right image depending on the type of weather
-void displayWeatherIcon(int weatherCode) {
+// This function shows the right image depending on the type of weather and of day
+void displayWeatherIcon(int weatherCode, String currentTime) {
 
-  tft.fillRect(200, 43, 64, 64, TFT_BLACK); // Clear previous icon
+  //First pull the sunrise/sunset times over the next 24h (required to do it this way by API)
+  // URL Endpoint for the API
+  String baseURL = "https://api.tomorrow.io/v4/timelines?location=LAT,LONG&fields=sunriseTime,sunsetTime&startTime=now&endTime=nowPlus1d&timesteps=1d";
+  String apiKey = "APIKEY";
+  // API Endpoint
+  String URL = baseURL + "&apikey=" + apiKey;
 
-  switch (weatherCode) {
-    case 1000:
-      tft.pushImage(200, 43, 64, 64, sunny);
-      break;
-    case 1100:
-      tft.pushImage(200, 43, 64, 64, sunny);
-      break;
-    case 1101:
-      tft.pushImage(200, 43, 64, 64, overcast);
-      break;
-    case 1102:
-    tft.pushImage(200, 43, 64, 64, overcast);
-    break;
-    case 1001:
-    tft.pushImage(200, 43, 64, 64, overcast);
-    break;
-    case 2000:
-    tft.pushImage(200, 43, 64, 64, overcast);
-    break;
-    case 2100:
-    tft.pushImage(200, 43, 64, 64, overcast);
-    break;
-    case 4000:
-    tft.pushImage(200, 43, 64, 64, rainy);
-    break;
-    case 4001:
-    tft.pushImage(200, 43, 64, 64, rainy);
-    break;
-    case 4200:
-    tft.pushImage(200, 43, 64, 64, rainy);
-    break;
-    case 4201:
-    tft.pushImage(200, 43, 64, 64, rainy);
-    break;
-    default:
-      tft.pushImage(200, 43, 64, 64, rainbow);
-      break;
+// Wait for WiFi connection
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(URL);
+
+    int httpCode = http.GET();
+    yield(); // Reset watchdog
+
+    if (httpCode > 0) {
+      String JSON_Data = http.getString();
+      yield(); // Reset watchdog
+
+      DynamicJsonDocument doc(4096);
+      deserializeJson(doc, JSON_Data);
+
+      // Access the first interval in the intervals array
+      JsonObject interval = doc["data"]["timelines"][0]["intervals"][0];
+      String sunriseTimeStr = interval["values"]["sunriseTime"].as<String>();
+      String sunsetTimeStr = interval["values"]["sunsetTime"].as<String>();
+
+      Serial.println("Sunrise Time: " + sunriseTimeStr);
+      Serial.println("Sunset Time: " + sunsetTimeStr);
+
+      // Convert UTC strings to time_t
+      struct tm tmCurrent, tmSunrise, tmSunset;
+      time_t currentTimeT, timeSunrise, timeSunset;
+
+      strptime(currentTime.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tmCurrent);
+      strptime(sunriseTimeStr.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tmSunrise);
+      strptime(sunsetTimeStr.c_str(), "%Y-%m-%dT%H:%M:%SZ", &tmSunset);
+
+      currentTimeT = mktime(&tmCurrent);
+      timeSunrise = mktime(&tmSunrise);
+      timeSunset = mktime(&tmSunset);
+
+      //tft.fillRect(200, 43, 64, 64, TFT_BLACK); // Clear previous icon
+
+      if((currentTimeT > timeSunset) && (currentTimeT < timeSunrise)) {
+        tft.pushImage(200, 43, 64, 64, moon);
+      } else if((currentTimeT > timeSunrise) && (currentTimeT > timeSunset)) {
+        tft.pushImage(200, 43, 64, 64, moon);
+      } else if((currentTimeT < timeSunrise) && (currentTimeT < timeSunset)) {
+        tft.pushImage(200, 43, 64, 64, moon);
+      } else {
+        switch (weatherCode) {
+          case 1000:
+            tft.pushImage(200, 43, 64, 64, sunny);
+            break;
+          case 1100:
+            tft.pushImage(200, 43, 64, 64, sunny);
+            break;
+          case 1101:
+            tft.pushImage(200, 43, 64, 64, overcast);
+            break;
+          case 1102:
+          tft.pushImage(200, 43, 64, 64, overcast);
+          break;
+          case 1001:
+          tft.pushImage(200, 43, 64, 64, overcast);
+          break;
+          case 2000:
+          tft.pushImage(200, 43, 64, 64, overcast);
+          break;
+          case 2100:
+          tft.pushImage(200, 43, 64, 64, overcast);
+          break;
+          case 4000:
+          tft.pushImage(200, 43, 64, 64, rainy);
+          break;
+          case 4001:
+          tft.pushImage(200, 43, 64, 64, rainy);
+          break;
+          case 4200:
+          tft.pushImage(200, 43, 64, 64, rainy);
+          break;
+          case 4201:
+          tft.pushImage(200, 43, 64, 64, rainy);
+          break;
+          default:
+            tft.pushImage(200, 43, 64, 64, rainbow);
+            break;
+        }
+      }
+
+    } else {
+      Serial.println("Error in HTTP request");
+    }
+
+    http.end();
   }
 }
 
@@ -123,6 +181,8 @@ void fetchWeatherData() {
 
       DynamicJsonDocument doc(2048);
       deserializeJson(doc, JSON_Data);
+      String currentTime = doc["timelines"]["minutely"][0]["time"].as<String>();
+      Serial.println(currentTime);
       JsonObject obj = doc["timelines"]["minutely"][0]["values"];
 
       // Loop through each key-value pair in the obj and print them
@@ -164,7 +224,7 @@ void fetchWeatherData() {
       tft.println("Wind: " + windSpeedStr + " m/s");
       tft.println("UV Index: " + String(uvIndex));
       //showing image
-      displayWeatherIcon(weatherCode);
+      displayWeatherIcon(weatherCode, currentTime);
 
     } else {
       Serial.println("Error in HTTP request");
