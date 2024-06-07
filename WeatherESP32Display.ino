@@ -1,9 +1,26 @@
+#define BLYNK_TEMPLATE_ID "BLYNKTEMPLATEID"
+#define BLYNK_TEMPLATE_NAME "BLYNKTEMPLATENAME"
+#define BLYNK_AUTH_TOKEN "BLYNKAUTHTOKEN"
+
+/* Comment this out to disable prints and save space */
+#define BLYNK_PRINT Serial
+
+// include the images
+#include "cloudy.h"
+#include "foggy.h"
+#include "overcast.h"
+#include "rainy.h"
+#include "sunny.h"
+#include "rainbow.h"
+#include "moon.h"
+
+#include <BlynkSimpleEsp32.h>
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <TFT_eSPI.h> // Graphics and font library for ST7735 driver chip
 #include <SPI.h>
-//Temp sensor stuff
+// Temp sensor stuff
 #include <DHT.h>
 #define DHT11PIN 13
 DHT dht(DHT11PIN, DHT11);
@@ -12,13 +29,13 @@ TFT_eSPI tft = TFT_eSPI();  // Invoke library, pins defined in User_Setup.h
 
 // WiFi Credentials
 const char* ssid = "YourNetworkName";
-const char* password = "YourPassword";
+const char* password = "YourNetworkPassword";
 
-//URL Endpoint for the API
+// URL Endpoint for the API
 String baseURL = "https://api.tomorrow.io/v4/weather/forecast?location=";
 String apiKey = "APIKEY";
 
-// Replace with your location Credentials
+// Replace with your location credentials
 String lat = "LAT";
 String lon = "LONG";
 
@@ -45,6 +62,51 @@ void uptimeEvent() {
   yield(); // Reset watchdog
 }
 
+// This function shows the right image depending on the type of weather
+void displayWeatherIcon(int weatherCode) {
+
+  tft.fillRect(200, 43, 64, 64, TFT_BLACK); // Clear previous icon
+
+  switch (weatherCode) {
+    case 1000:
+      tft.pushImage(200, 43, 64, 64, sunny);
+      break;
+    case 1100:
+      tft.pushImage(200, 43, 64, 64, sunny);
+      break;
+    case 1101:
+      tft.pushImage(200, 43, 64, 64, overcast);
+      break;
+    case 1102:
+    tft.pushImage(200, 43, 64, 64, overcast);
+    break;
+    case 1001:
+    tft.pushImage(200, 43, 64, 64, overcast);
+    break;
+    case 2000:
+    tft.pushImage(200, 43, 64, 64, overcast);
+    break;
+    case 2100:
+    tft.pushImage(200, 43, 64, 64, overcast);
+    break;
+    case 4000:
+    tft.pushImage(200, 43, 64, 64, rainy);
+    break;
+    case 4001:
+    tft.pushImage(200, 43, 64, 64, rainy);
+    break;
+    case 4200:
+    tft.pushImage(200, 43, 64, 64, rainy);
+    break;
+    case 4201:
+    tft.pushImage(200, 43, 64, 64, rainy);
+    break;
+    default:
+      tft.pushImage(200, 43, 64, 64, rainbow);
+      break;
+  }
+}
+
 // This function grabs weather data from the API
 void fetchWeatherData() {
    // Wait for WiFi connection
@@ -57,12 +119,18 @@ void fetchWeatherData() {
 
     if (httpCode > 0) {
       String JSON_Data = http.getString();
-      Serial.println(JSON_Data);
       yield(); // Reset watchdog
 
       DynamicJsonDocument doc(2048);
       deserializeJson(doc, JSON_Data);
       JsonObject obj = doc["timelines"]["minutely"][0]["values"];
+
+      // Loop through each key-value pair in the obj and print them
+      for (JsonPair kv : obj) {
+        Serial.print(kv.key().c_str());
+        Serial.print(": ");
+        Serial.println(kv.value().as<String>());
+      }
 
       // Extract temperature, wind speed, and UV index
       float tempCelsius = obj["temperature"];
@@ -71,6 +139,9 @@ void fetchWeatherData() {
       // Extract wind speed
       float windSpeedFloat = obj["windSpeed"];
       String windSpeedStr = String(windSpeedFloat, 1); // Convert to string with one decimal place
+
+      // Extract weather
+      int weatherCode = obj["weatherCode"];
 
       int uvIndex = obj["uvIndex"];
 
@@ -92,6 +163,8 @@ void fetchWeatherData() {
       tft.println("Int Hum: " + String(int(humi)) + "%");
       tft.println("Wind: " + windSpeedStr + " m/s");
       tft.println("UV Index: " + String(uvIndex));
+      //showing image
+      displayWeatherIcon(weatherCode);
 
     } else {
       Serial.println("Error in HTTP request");
@@ -112,11 +185,11 @@ void updateDhtData() {
   Blynk.virtualWrite(V4, humi);  // V4 is for humidity
 
   // Update internal temperature
-  tft.setCursor(0, 34, 2.5);
+  tft.setCursor(0, 32, 2.5);
   tft.setTextSize(2.5);
   tft.println("Int Temp: " + String(int(round(temp))) + "F");
   // Update internal humidity
-  tft.setCursor(0, 68, 2.5);
+  tft.setCursor(0, 66, 2.5);
   tft.setTextSize(2.5);
   tft.println("Int Hum: " + String(int(humi)) + "%");
 }
@@ -134,6 +207,8 @@ void setup() {
   // Initialize LCD
   tft.init();
   tft.setRotation(3);
+  //for image
+  tft.setSwapBytes(true);
 
   // Start the DHT11 Sensor
   dht.begin();
