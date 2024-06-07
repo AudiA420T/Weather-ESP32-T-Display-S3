@@ -14,7 +14,8 @@ Original Setup
 
 Updated Package
 ![IMG_9607](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/128e399e-7b3f-4b31-978d-710f755a25a2)
-![IMG_9610](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/7dccee26-8287-4442-85d7-8dc222628b5e)
+![IMG_9626](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/b6902386-0eaf-4378-938f-961712fdccf7)
+
 
 *** NOTES ON HOW TO SET UP THE LILYGO T-DISPLAY ***
 
