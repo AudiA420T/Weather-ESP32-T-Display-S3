@@ -6,7 +6,7 @@ You can think about the code as (4) distinct pieces:
 1. Blynk code to make this an external Blynk sensor that I can use with their app to monitor
 2. Weather API from (https://www.tomorrow.io/) to pull the latest weather data
 3. DHT Sensor inputs
-4. <a href="https://www.flaticon.com/free-icons/rain" title="Rain Icons">Rain icons created by geotatah</a>
+4. <a href="https://www.flaticon.com/free-icons/rainbow" title="rainbow icons">Rainbow icons created by geotatah - Flaticon</a>
 
 Original Setup
 ![IMG_9608](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/77aa3a9d-0060-42d9-83e3-313e75c36790)
