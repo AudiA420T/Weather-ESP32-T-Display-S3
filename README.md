@@ -13,13 +13,16 @@ Original Setup
 ![IMG_9609](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/ebcd3930-d8e3-48ca-94c0-16975f4e4473)
 
 DHT11 Sensor Types
+
 ![image](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/0494f9b8-7cb7-46ae-b122-f162dd882404)
 
 I used the 3 pin PCB for mine, but I couldn't find the Fritzing diagram for it. So here is a schematic for the generic 4 pin unit
 
 <img width="563" alt="Fritzing" src="https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/3b9dfa01-0cb7-4bfc-a991-3fb0097dc695">
 
+
 Updated Package
+
 ![IMG_9607](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/128e399e-7b3f-4b31-978d-710f755a25a2)
 ![IMG_9626](https://github.com/AudiA420T/Weather-ESP32-T-Display-S3/assets/6942261/b6902386-0eaf-4378-938f-961712fdccf7)
 
