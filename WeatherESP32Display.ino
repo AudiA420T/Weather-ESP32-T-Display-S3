@@ -63,6 +63,9 @@ void uptimeEvent() {
   yield(); // Reset watchdog
 }
 
+//to fix the icon blanking when fetchinng the latest weather
+String currentIcon = "filler";
+
 // This function shows the right image depending on the type of weather and of day
 void displayWeatherIcon(int weatherCode, String currentTime) {
 
@@ -111,48 +114,63 @@ void displayWeatherIcon(int weatherCode, String currentTime) {
       //tft.fillRect(200, 43, 64, 64, TFT_BLACK); // Clear previous icon
 
       if((currentTimeT > timeSunset) && (currentTimeT < timeSunrise)) {
-        tft.pushImage(200, 43, 64, 64, moon);
+        if((currentIcon) != "moon") {
+          currentIcon = "moon";
+          tft.pushImage(200, 43, 64, 64, moon);
+        }
       } else if((currentTimeT > timeSunrise) && (currentTimeT > timeSunset)) {
-        tft.pushImage(200, 43, 64, 64, moon);
+        if((currentIcon) != "moon") {
+          currentIcon = "moon";
+          tft.pushImage(200, 43, 64, 64, moon);
+        }
       } else if((currentTimeT < timeSunrise) && (currentTimeT < timeSunset)) {
-        tft.pushImage(200, 43, 64, 64, moon);
+        if((currentIcon) != "moon") {
+          currentIcon = "moon";
+          tft.pushImage(200, 43, 64, 64, moon);
+        }
       } else {
         switch (weatherCode) {
           case 1000:
-            tft.pushImage(200, 43, 64, 64, sunny);
-            break;
           case 1100:
-            tft.pushImage(200, 43, 64, 64, sunny);
+            if((currentIcon) != "sunny") {
+              currentIcon = "sunny";
+              tft.pushImage(200, 43, 64, 64, sunny);
+            }
             break;
           case 1101:
-            tft.pushImage(200, 43, 64, 64, overcast);
+            if((currentIcon) != "overcast") {
+              currentIcon = "overcast";
+              tft.pushImage(200, 43, 64, 64, overcast);
+            }
             break;
-          case 1102:
-          tft.pushImage(200, 43, 64, 64, overcast);
-          break;
           case 1001:
-          tft.pushImage(200, 43, 64, 64, overcast);
-          break;
-          case 2000:
-          tft.pushImage(200, 43, 64, 64, overcast);
-          break;
+          case 1102:
+            if((currentIcon) != "cloudy") {
+              currentIcon = "cloudy";
+              tft.pushImage(200, 43, 64, 64, cloudy);
+            }
+            break;
           case 2100:
-          tft.pushImage(200, 43, 64, 64, overcast);
-          break;
+          case 2000:
+            if((currentIcon) != "foggy") {
+              currentIcon = "foggy";
+              tft.pushImage(200, 43, 64, 64, foggy);
+            }
+            break;
           case 4000:
-          tft.pushImage(200, 43, 64, 64, rainy);
-          break;
           case 4001:
-          tft.pushImage(200, 43, 64, 64, rainy);
-          break;
           case 4200:
-          tft.pushImage(200, 43, 64, 64, rainy);
-          break;
           case 4201:
-          tft.pushImage(200, 43, 64, 64, rainy);
-          break;
+            if((currentIcon) != "rainy") {
+              currentIcon = "rainy";
+              tft.pushImage(200, 43, 64, 64, rainy);
+            }
+            break;
           default:
-            tft.pushImage(200, 43, 64, 64, rainbow);
+            if((currentIcon) != "rainbow") {
+              currentIcon = "rainbow";
+              tft.pushImage(200, 43, 64, 64, rainbow);
+            }
             break;
         }
       }
@@ -214,13 +232,23 @@ void fetchWeatherData() {
       Blynk.virtualWrite(V4, humi);  // V4 is for humidity
 
       // Display the data on the TFT screen
-      tft.fillScreen(TFT_BLACK); // Set background to black
+      //tft.fillScreen(TFT_BLACK);
       tft.setCursor(0, 0, 2);
       tft.setTextColor(TFT_WHITE, TFT_BLACK);
       tft.setTextSize(2.5);
       tft.println("Ext Temp: " + String(tempFahrenheit) + "F");
-      tft.println("Int Temp: " + String(int(round(temp))) + "F");
-      tft.println("Int Hum: " + String(int(humi)) + "%");
+      String intTemp = String(int(round(temp)));
+      //filtering out bug where sensor would throw odd values out
+      if(intTemp.length() <= 3) {
+        tft.println("Int Temp: " + intTemp + "F");
+      }
+      Serial.println("Int Temp: " + String(int(round(temp))) + "F");
+      String intHum = String(int(humi));
+      //filtering out bug where sensor would throw odd values out
+      if(intHum.length() <= 3) {
+        tft.println("Int Hum: " + intHum + "%");;
+      }
+      Serial.println("Int Hum: " + String(int(humi)) + "%");
       tft.println("Wind: " + windSpeedStr + " m/s");
       tft.println("UV Index: " + String(uvIndex));
       //showing image
@@ -247,11 +275,20 @@ void updateDhtData() {
   // Update internal temperature
   tft.setCursor(0, 32, 2.5);
   tft.setTextSize(2.5);
-  tft.println("Int Temp: " + String(int(round(temp))) + "F");
+  String intTemp = String(int(round(temp)));
+  //filtering out bug where sensor would throw odd values out
+  if(intTemp.length() <= 3) {
+    tft.println("Int Temp: " + intTemp + "F");
+  }
+  
   // Update internal humidity
   tft.setCursor(0, 66, 2.5);
   tft.setTextSize(2.5);
-  tft.println("Int Hum: " + String(int(humi)) + "%");
+  String intHum = String(int(humi));
+  //filtering out bug where sensor would throw odd values out
+  if(intHum.length() <= 3) {
+    tft.println("Int Hum: " + intHum + "%");;
+  }
 }
 
 void setup() {
