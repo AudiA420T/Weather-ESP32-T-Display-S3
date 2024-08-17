@@ -278,7 +278,11 @@ void updateDhtData() {
   String intTemp = String(int(round(temp)));
   //filtering out bug where sensor would throw odd values out
   if(intTemp.length() <= 3) {
-    tft.println("Int Temp: " + intTemp + "F");
+    if(intTemp.length() == 2) {
+      tft.println("Int Temp: " + intTemp + "F  ");
+    } else {
+      tft.println("Int Temp: " + intTemp + "F");
+    }
   }
   
   // Update internal humidity
@@ -287,7 +291,20 @@ void updateDhtData() {
   String intHum = String(int(humi));
   //filtering out bug where sensor would throw odd values out
   if(intHum.length() <= 3) {
-    tft.println("Int Hum: " + intHum + "%");;
+    if(intHum.length() == 2) {
+      tft.println("Int Hum: " + intHum + "%  ");
+    } else {
+      tft.println("Int Hum: " + intHum + "%");
+    }
+  }
+}
+
+// This function checks if WiFi is connected, otherwise resets the ESP32
+void wifiCheckEvent()
+{
+  // Checking WiFi status. If not connected, reset ESP32
+  if(WiFi.status() != WL_CONNECTED) {
+     ESP.restart();
   }
 }
 
@@ -300,6 +317,7 @@ void setup() {
   uptimeTimer.setInterval(1000L, uptimeEvent);
   weatherApiTimer.setInterval(600000L, fetchWeatherData); // Every 10 minutes
   dhtSensorTimer.setInterval(10000L, updateDhtData); // Every 10 seconds
+  wifiTimer.setInterval(600000L, wifiCheckEvent); // Every 10 minutes
   
   // Initialize LCD
   tft.init();
